@@ -43,3 +43,36 @@ git clone https://github.com/faridhassani95/Linux-Dashboard.git
 cd Linux-Dashboard
 cp config.env.example config.env
 docker-compose up -d
+```
+
+Access the dashboard at `http://localhost:8000`.
+
+## Configuration
+
+Configured via `config.env`:
+
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `COLLECTION_INTERVAL` | Seconds between data collection cycles | 60 |
+| `TIMEZONE` | Timezone for timestamps | Asia/Tehran |
+| `DASHBOARD_TOKEN` | API token (reserved for future use) | - |
+| `TELEGRAM_BOT_TOKEN` | Telegram integration token (reserved for future use) | - |
+
+## Project Structure
+
+```
+Linux-Dashboard/
+├── collector.sh       # Bash script for system metrics
+├── config.env         # Environment config
+├── dashboard.py       # Flask application entry point
+├── docker-compose.yml # Docker orchestration
+├── Dockerfile         # Container build definition
+├── entrypoint.sh      # Service orchestrator
+├── output/            # JSON reports
+└── templates/
+    └── index.html     # Frontend template
+```
+
+## License
+
+This project is open-source and available under the MIT License. See the separate `LICENSE` file for full details.

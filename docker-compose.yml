@@ -1,0 +1,11 @@
+services:
+  dashboard:
+    build: .
+    container_name: graphic-dashboard-v2
+    ports:
+      - "8000:8000"
+    volumes:
+    - /sys:/sys:ro
+      - ./output:/app/output
+      - ./config.env:/app/config.env:ro
+    restart: always

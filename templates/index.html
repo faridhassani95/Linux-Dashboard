@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-950 text-white">
+<head>
+  <meta charset="utf-8">
+  <title>Ultimate Linux Security Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .chart-container { height: 260px; }
+    .value { font-size: 4.5rem; font-weight: 900; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="container mx-auto p-6 max-w-screen-2xl">
+    <h1 class="text-6xl font-black text-center my-12 bg-gradient-to-r from-cyan-400 to-purple-600 bg-clip-text text-transparent">
+      Ultimate Linux Security Dashboard
+    </h1>
+
+    <div id="stats" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 mb-10"></div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+      <div class="bg-gray-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-cyan-700 p-8">
+        <div class="flex justify-between items-baseline mb-6">
+          <h3 class="text-2xl font-bold text-cyan-300">CPU Usage</h3>
+          <span id="cpu-value" class="value text-cyan-400">0%</span>
+        </div>
+        <div class="chart-container"><canvas id="cpuChart"></canvas></div>
+      </div>
+      <div class="bg-gray-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-purple-700 p-8">
+        <div class="flex justify-between items-baseline mb-6">
+          <h3 class="text-2xl font-bold text-purple-300">Memory Usage</h3>
+          <span id="mem-value" class="value text-purple-400">0%</span>
+        </div>
+        <div class="chart-container"><canvas id="memChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="text-center mt-12 text-gray-400 text-sm">
+      Real-time • Update every 5 seconds • Docker + Flask + Chart.js
+    </div>
+
+    <!-- فقط این div آپدیت میشه -->
+    <div hx-get="/data" hx-trigger="every 5s" hx-swap="none"></div>
+  </div>
+
+  <script>
+    const cpuChart = new Chart(document.getElementById('cpuChart'), {
+      type: 'line',
+      data: { labels: [], datasets: [{ borderColor: '#00ff9d', backgroundColor: 'rgba(0,255,157,0.2)', borderWidth: 4, pointRadius: 3, fill: true, tension: 0.4 }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, grid: { color: '#334155' } }, x: { grid: { display: false } } } }
+    });
+
+    const memChart = new Chart(document.getElementById('memChart'), {
+      type: 'line',
+      data: { labels: [], datasets: [{ borderColor: '#ff2e63', backgroundColor: 'rgba(255,46,99,0.2)', borderWidth: 4, pointRadius: 3, fill: true, tension: 0.4 }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, grid: { color: '#334155' } }, x: { grid: { display: false } } } }
+    });
+
+    htmx.on("htmx:afterRequest", evt => {
+      if (evt.detail.pathInfo.requestPath !== "/data") return;
+      const data = JSON.parse(evt.detail.xhr.responseText);
+      const d = data.data || {};
+
+      document.getElementById("cpu-value").textContent = (d.cpu || 0).toFixed(1) + "%";
+      document.getElementById("mem-value").textContent = (d.mem || 0).toFixed(1) + "%";
+
+      const time = new Date().toLocaleTimeString([], {second: '2-digit'});
+      cpuChart.data.labels.push(time); memChart.data.labels.push(time);
+      if (cpuChart.data.labels.length > 30) { cpuChart.data.labels.shift(); memChart.data.labels.shift(); }
+      cpuChart.data.datasets[0].data.push(d.cpu || 0);
+      memChart.data.datasets[0].data.push(d.mem || 0);
+      if (cpuChart.data.datasets[0].data.length > 30) { cpuChart.data.datasets[0].data.shift(); memChart.data.datasets[0].data.shift(); }
+      cpuChart.update('quiet'); memChart.update('quiet');
+
+      document.getElementById("stats").innerHTML = `
+        <div class="bg-gradient-to-br from-blue-900 to-indigo-800 p-6 rounded-2xl shadow-xl"><p class="text-sm opacity-80">Hostname</p><p class="text-xl font-bold">${data.hostname}</p></div>
+        <div class="bg-gradient-to-br ${d.failed_ssh > 20 ? 'from-red-900 to-rose-700' : d.failed_ssh > 8 ? 'from-orange-900 to-amber-700' : 'from-green-900 to-emerald-700'} p-6 rounded-2xl shadow-xl"><p class="text-sm opacity-80">Failed SSH</p><p class="text-4xl font-black">${d.failed_ssh || 0}</p></div>
+        <div class="bg-gradient-to-br from-purple-900 to-pink-700 p-6 rounded-2xl shadow-xl"><p class="text-sm opacity-80">Uptime</p><p class="text-lg">${data.uptime}</p></div>
+        <div class="bg-gradient-to-br from-cyan-900 to-teal-700 p-6 rounded-2xl shadow-xl"><p class="text-sm opacity-80">Load Avg</p><p class="text-xl font-mono">${data.load_average}</p></div>
+        <div class="bg-gradient-to-br from-rose-900 to-pink-700 p-6 rounded-2xl shadow-xl"><p class="text-sm opacity-80">CPU Temp</p><p class="text-2xl">${d.cpu_temp || "N/A"}</p></div>
+        <div class="bg-gradient-to-br from-amber-900 to-yellow-700 p-6 rounded-2xl shadow-xl"><p class="text-sm opacity-80">Open Ports</p><p class="text-2xl">${d.open_ports || 0}</p></div>
+      `;
+    });
+  </script>
+</body>
+</html>

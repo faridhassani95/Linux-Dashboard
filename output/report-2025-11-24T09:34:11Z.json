@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-11-24T09:34:11Z",
+  "hostname": "edaa6306f1c3",
+  "uptime": "up 4 hours, 52 minutes",
+  "load_average": "0.48 0.22 0.29",
+  "data": {
+    "cpu": 99.9,
+    "mem": 70.7,
+    "failed_ssh": 38,
+    "cpu_temp": "N/A",
+    "open_ports": 3
+  }
+}
